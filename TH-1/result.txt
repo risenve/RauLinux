@@ -1,0 +1,8 @@
+./do 12345678 2345
+
+
+single thread sum: 611153027
+time taken (single threaded): 0.171114 seconds
+multi threaded sum: 611153027
+time taken (multi threaded): 0.311708 seconds
+

@@ -8,4 +8,3 @@ ${FILE}: ${FILE}.cpp
 
 clean:
 	rm ${FILE}
-
