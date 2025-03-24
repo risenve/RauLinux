@@ -3,67 +3,66 @@
 #include <ctime>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/mman.h>
 #include <semaphore.h>
 
-#define n 5 // Number of philosophers
+#define N 5
 
-sem_t* sticks[n]; 
+sem_t* create_shared_sem() {
+    sem_t* sem = (sem_t*)mmap(NULL, sizeof(sem_t), 
+                          PROT_READ | PROT_WRITE,
+                          MAP_SHARED | MAP_ANONYMOUS, 
+                          -1, 0);
+    if (sem == MAP_FAILED) return NULL;
+    return sem;
+}
+
+sem_t* sticks[N];
 
 void philosopher(int id) {
-    srand(time(NULL) ^ (getpid() << 16)); 
-    int left = id; 
-    int right = (id + 1) % n; 
-    if (id == 0) {
-        std::swap(left, right);
-    }
+    int left = id;
+    int right = (id + 1) % N;
 
-    while (true) {
-        // thinking
-        int think_time = rand() % 3 + 1; // time for thinking 
-        std::cout << "philosopher " << id << " is thinking for " << think_time << " sec.\n";
-        sleep(think_time);
-        //choosing
-        sem_wait(sticks[left]); 
-        sem_wait(sticks[right]); 
+    if (id == 0) std::swap(left, right);
+
+    for (int meals = 0; meals < 3; ++meals) { 
         
-        // eating
-        int eat_time = rand() % 3 + 1; //time for eating
-        std::cout << "philosopher " << id << " is eating for " << eat_time << " sec.\n";
-        sleep(eat_time);
+        std::cout << "философ " << id << " думает\n";
+        sleep(1 + rand() % 3);
         
-        // put down
-        sem_post(sticks[right]); 
+        sem_wait(sticks[left]);
+        sem_wait(sticks[right]);
+        
+        std::cout << "философ " << id << " ест\n";
+        sleep(1 + rand() % 2);
+        
+        
+        sem_post(sticks[right]);
         sem_post(sticks[left]);
     }
 }
 
 int main() {
-    for (int i = 0; i < n; i++) {
-        sticks[i] = new sem_t;
-        sem_init(sticks[i], 1, 1);  
+    srand(time(NULL)); 
+    for (int i = 0; i < N; ++i) {
+        sticks[i] = create_shared_sem();
+        sem_init(sticks[i], 1, 1); 
     }
-    
-     
-    pid_t pids[n];
-    for (int i = 0; i < n; i++) {
-        pids[i] = fork();
-        if (pids[i] == 0) {  
+
+    for (int i = 0; i < N; ++i) {
+        pid_t pid = fork();
+        if (pid == 0) {
             philosopher(i);
             exit(0);
         }
     }
-    
-     
-    for (int i = 0; i < n; i++) {
-        waitpid(pids[i], NULL, 0);
+
+    for (int i = 0; i < N; ++i) wait(NULL);
+
+    for (int i = 0; i < N; ++i) {
+        sem_destroy(sticks[i]);
+        munmap(sticks[i], sizeof(sem_t));
     }
-    
-     
-    for (int i = 0; i < n; i++) {
-        sem_destroy(sticks[i]); 
-        delete sticks[i]; 
-    }
-    
+
     return 0;
 }
-
