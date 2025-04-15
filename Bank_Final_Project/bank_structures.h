@@ -2,8 +2,12 @@
 #define BANK_STRUCTURES_H
 
 #include <pthread.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <semaphore.h>
 
 const char* SHM_NAME = "/bank";
+const char* SEM_NAME = "/bank_sem";
 
 struct Bill {
     int balance;
@@ -13,11 +17,10 @@ struct Bill {
 };
 
 struct Bank {
-    sem_t *sem_open(const char '/bank', int oflag,
-                       mode_t mode, unsigned int value);
+    sem_t* semaphore;
     int size;
     Bill bills[];
-    i
+    
 };
 
 #endif

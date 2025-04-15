@@ -27,7 +27,15 @@ int main() {
         return 1;
     }
 
-    pthread_mutex_destroy(&bank->mutex);
+   // pthread_mutex_destroy(&bank->mutex);
+    
+    if (sem_close(bank->semaphore) == -1) {
+        perror("sem_close failed");
+    }
+
+    if (sem_unlink(SEM_NAME) == -1) {
+        perror("sem_unlink failed (возможно, уже удален)");
+    }
 
     munmap(bank, sb.st_size);
     close(fd);

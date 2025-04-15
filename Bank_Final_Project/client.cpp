@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <stdexcept>
 #include "bank_structures.h"
+#include <semaphore.h>
 
 using namespace std;
 
@@ -145,13 +146,16 @@ vector<string> split_command(const string& cmd) {
 }
 
 void show_balance(Bank* bank, int account) {
-    pthread_mutex_lock(&bank->mutex);
+    sem_wait(bank->semaphore);
+    //pthread_mutex_lock(&bank->mutex);
     if (account < 0 || account >= bank->size) {
         cout << "Error: Invalid account number!" << endl;
     } else {
         cout << "Account " << account << " balance: " << bank->bills[account].balance << endl;
     }
-    pthread_mutex_unlock(&bank->mutex);
+    //pthread_mutex_unlock(&bank->mutex);
+    sem_post(bank->semaphore);
+
 }
 
 void transfer(Bank* bank, int from, int to, int amount) {
@@ -160,7 +164,8 @@ void transfer(Bank* bank, int from, int to, int amount) {
         return;
     }
 
-    pthread_mutex_lock(&bank->mutex);
+    //mutex 
+    sem_wait(bank->semaphore);
     try {
         if (from < 0 || from >= bank->size || to < 0 || to >= bank->size) {
             throw runtime_error("Invalid account number");
@@ -184,94 +189,114 @@ void transfer(Bank* bank, int from, int to, int amount) {
     } catch (const exception& e) {
         cout << "Transfer failed: " << e.what() << endl;
     }
-    pthread_mutex_unlock(&bank->mutex);
+    //pthread_mutex_unlock(&bank->mutex);
+    sem_post(bank->semaphore);
 }
 
 void credit_all(Bank* bank, int amount) {
-    pthread_mutex_lock(&bank->mutex);
+    //pthread_mutex_lock(&bank->mutex);
+    sem_wait(bank->semaphore);
+
     for (int i = 0; i < bank->size; ++i) {
         if (!bank->bills[i].frozen) {
             bank->bills[i].balance += amount;
         }
     }
     cout << "Credited " << amount << " to all accounts" << endl;
-    pthread_mutex_unlock(&bank->mutex);
+    //pthread_mutex_unlock(&bank->mutex);
+    sem_post(bank->semaphore);
+
 }
 
 void freeze_account(Bank* bank, int account) {
-    pthread_mutex_lock(&bank->mutex);
+   // pthread_mutex_lock(&bank->mutex);
+    sem_wait(bank->semaphore);
+
     if (account < 0 || account >= bank->size) {
         cout << "Error: Invalid account number!" << endl;
     } else {
         bank->bills[account].frozen = true;
         cout << "Account " << account << " frozen" << endl;
     }
-    pthread_mutex_unlock(&bank->mutex);
+    sem_post(bank->semaphore);
+    //pthread_mutex_unlock(&bank->mutex);
 }
 
 
 void show_min_balance(Bank* bank, int account) {
-    pthread_mutex_lock(&bank->mutex);
+    //pthread_mutex_lock(&bank->mutex);
+    sem_wait(bank->semaphore);
     if (account < 0 || account >= bank->size) {
         cout << "Error: Invalid account number!" << endl;
     } else {
         cout << "Account " << account << " min balance: "
              << bank->bills[account].min_balance << endl;
     }
-    pthread_mutex_unlock(&bank->mutex);
+    sem_wait(bank->semaphore);
+
+    //pthread_mutex_unlock(&bank->mutex);
 }
 
 void show_max_balance(Bank* bank, int account) {
-    pthread_mutex_lock(&bank->mutex);
+    //pthread_mutex_lock(&bank->mutex);
+    sem_wait(bank->semaphore);
     if (account < 0 || account >= bank->size) {
         cout << "Error: Invalid account number!" << endl;
     } else {
         cout << "Account " << account << " max balance: "
              << bank->bills[account].max_balance << endl;
     }
-    pthread_mutex_unlock(&bank->mutex);
+    sem_post(bank->semaphore);
+    //pthread_mutex_unlock(&bank->mutex);
 }
 
 void unfreeze_account(Bank* bank, int account) {
-    pthread_mutex_lock(&bank->mutex);
+    //pthread_mutex_lock(&bank->mutex);
+    sem_wait(bank->semaphore);
     if (account < 0 || account >= bank->size) {
         cout << "Error: Invalid account number!" << endl;
     } else {
         bank->bills[account].frozen = false;
         cout << "Account " << account << " unfrozen" << endl;
     }
-    pthread_mutex_unlock(&bank->mutex);
+    sem_post(bank->semaphore);
+   // pthread_mutex_unlock(&bank->mutex);
 }
 
 void debit_all(Bank* bank, int amount) {
-    pthread_mutex_lock(&bank->mutex);
+    //pthread_mutex_lock(&bank->mutex);
+    sem_wait(bank->semaphore);
     for (int i = 0; i < bank->size; ++i) {
         if (!bank->bills[i].frozen) {
             bank->bills[i].balance -= amount;
         }
     }
     cout << "Debited " << amount << " from all accounts" << endl;
-    pthread_mutex_unlock(&bank->mutex);
+    //pthread_mutex_unlock(&bank->mutex);
+    sem_post(bank->semaphore);
 }
 
 void set_min_balance(Bank* bank, int account, int new_min) {
-    pthread_mutex_lock(&bank->mutex);
+    sem_wait(bank->semaphore);
     if (account < 0 || account >= bank->size) {
         cout << "Error: Invalid account number!" << endl;
     } else {
         bank->bills[account].min_balance = new_min;
         cout << "Account " << account << " min balance set to " << new_min << endl;
     }
-    pthread_mutex_unlock(&bank->mutex);
+    sem_post(bank->semaphore);
+   // pthread_mutex_unlock(&bank->mutex);
 }
 
 void set_max_balance(Bank* bank, int account, int new_max) {
-    pthread_mutex_lock(&bank->mutex);
+    //pthread_mutex_lock(&bank->mutex);
+    sem_wait(bank->semaphore);
     if (account < 0 || account >= bank->size) {
         cout << "Error: Invalid account number!" << endl;
     } else {
         bank->bills[account].max_balance = new_max;
         cout << "Account " << account << " max balance set to " << new_max << endl;
     }
-    pthread_mutex_unlock(&bank->mutex);
+    sem_post(bank->semaphore);
+    //pthread_mutex_unlock(&bank->mutex);
 }
