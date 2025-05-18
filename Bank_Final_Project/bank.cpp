@@ -1,79 +1,84 @@
 #include "bank_structures.h"
 #include <iostream>
-#include <sys/mman.h>
 #include <unistd.h>
 #include <stdexcept>
+#include <climits>
 
-Bank::Bank(void* shared_mem, int n) {
-    size = n;
-   
-    char* mem = static_cast<char*>(shared_mem);
-    bills = reinterpret_cast<Bill*>(mem + sizeof(Bank));
+using namespace std;
 
-    semaphore = sem_open("./bank_sem", O_CREAT | O_EXCL, 0666, 1);
-    if (semaphore == SEM_FAILED) {
-        throw std::runtime_error("Failed to create semaphore");
+Bank::Bank(int n) : size(n) {
+    bills = new Bill[n];
+    sem_init(&semaphore, 1, 1);
+    sem_wait(&semaphore);
+    for (int i = 0; i < size; i++) {
+        bills[i].id = i;
+        bills[i].balance = 0;
+        bills[i].min_balance = INT_MIN;
+        bills[i].max_balance = INT_MAX;
+        bills[i].frozen = false;
     }
+    sem_post(&semaphore);
 }
 
 Bank::~Bank() {
-    sem_close(semaphore);
+    sem_destroy(&semaphore);
+    delete[] bills;
 }
 
-//выводы семафоров 
-
-void Bank::safe_sem_wait() {
-    if (sem_wait(semaphore)) {
-        throw std::runtime_error("Semaphore WAIT failed");
+void Bank::print_info() {
+    sem_wait(&semaphore);
+    for (int i = 0; i < size; ++i) {
+        cout << "id: " << bills[i].id << "\n"
+             << "Balance: " << bills[i].balance << "\n"
+             << "Min balance: " << bills[i].min_balance << "\n"
+             << "Max balance: " << bills[i].max_balance << "\n"
+             << "Frozen Status: " << bills[i].frozen << endl;
     }
+    sem_post(&semaphore);
 }
 
-void Bank::safe_sem_post() {
-    if (sem_post(semaphore)) {
-        throw std::runtime_error("Semaphore POST failed");
-    }
-}
 void Bank::show_balance(int account) {
-    safe_sem_wait();
+    sem_wait(&semaphore);
     if (account < 0 || account >= size) {
-        safe_sem_post();
-        throw std::runtime_error("Invalid account number");
+        cout << "Invalid account number" << endl;
+        sem_post(&semaphore);
+        return;
     }
-    int balance = bills[account].balance;
-    safe_sem_post();
-    std::cout << "Account " << account << " balance: " << balance << std::endl;
+    cout << "Account " << account << " balance: " << bills[account].balance << endl;
+    sem_post(&semaphore);
 }
 
 void Bank::transfer(int from, int to, int amount) {
     if (amount <= 0) {
-        throw std::runtime_error("Amount must be positive");
+        throw runtime_error("Amount must be positive");
     }
-
-    safe_sem_wait();
+    if (from == to) {
+        throw runtime_error("Unable to transfer money to the same account");
+    }
+    sem_wait(&semaphore);
     try {
         if (from < 0 || from >= size || to < 0 || to >= size) {
-            throw std::runtime_error("Invalid account number");
+            throw runtime_error("Invalid account number");
         }
 
         Bill& from_acc = bills[from];
         Bill& to_acc = bills[to];
 
-        if (from_acc.frozen) throw std::runtime_error("Source account frozen");
-        if (to_acc.frozen) throw std::runtime_error("Destination account frozen");
+        if (from_acc.frozen) throw runtime_error("Source account frozen");
+        if (to_acc.frozen) throw runtime_error("Destination account frozen");
         if (from_acc.balance - amount < from_acc.min_balance) {
-            throw std::runtime_error("Insufficient funds (min balance limit)");
+            throw runtime_error("Insufficient funds (min balance limit)");
         }
         if (to_acc.balance + amount > to_acc.max_balance) {
-            throw std::runtime_error("Exceeds destination's max balance");
+            throw runtime_error("Exceeds destination's max balance");
         }
 
         from_acc.balance -= amount;
         to_acc.balance += amount;
-        safe_sem_post();
-        std::cout << "Transfer successful: " << amount << " from account " << from << " to account " << to << std::endl;
+        sem_post(&semaphore);
+        cout << "Transfer successful: " << amount << " from account " << from << " to account " << to << endl;
     } catch (...) {
-        safe_sem_post();
+        sem_post(&semaphore);
         throw;
     }
 }
-

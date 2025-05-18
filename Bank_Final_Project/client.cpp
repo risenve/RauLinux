@@ -29,7 +29,7 @@ void print_help() {
 }
 
 int main() {
-    int fd = shm_open("./bank", O_RDWR, 0666);
+    int fd = shm_open("/bank", O_RDWR, 0666);
     if (fd == -1) {
         cerr << "Error: Bank not initialized. Run ./init first" << endl;
         return 1;
@@ -41,20 +41,8 @@ int main() {
         close(fd);
         return 1;
     }
-
+    
     Bank* bank = (Bank*)mmap(NULL, sb.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    close(fd);
-
-    if (bank == MAP_FAILED) {
-        perror("mmap failed");
-        return 1;
-    }
-
-    if ((size_t)sb.st_size < sizeof(Bank) + bank->size * sizeof(Bill)) {
-        cerr << "Shared memory too small!" << endl;
-        munmap(bank, sb.st_size);
-        return 1;
-    }
 
     print_help();
     
@@ -79,5 +67,5 @@ int main() {
     cin >> command;
     }
         munmap(bank, sb.st_size);
-        return 0;
+        close(fd);
     }
