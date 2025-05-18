@@ -82,3 +82,50 @@ void Bank::transfer(int from, int to, int amount) {
         throw;
     }
 }
+
+
+void Bank::show_min_balance(int account) {
+    sem_wait(&semaphore);
+    if (account < 0 || account >= size) {
+        cout << "Invalid account number" << endl;
+        sem_post(&semaphore);
+        return;
+    }
+    cout << "Account " << account << " min balance: " << bills[account].min_balance << endl;
+    sem_post(&semaphore);
+}
+
+void Bank::show_max_balance(int account) {
+    sem_wait(&semaphore);
+    if (account < 0 || account >= size) {
+        cout << "Invalid account number" << endl;
+        sem_post(&semaphore);
+        return;
+    }
+    cout << "Account " << account << " max balance: " << bills[account].max_balance << endl;
+    sem_post(&semaphore);
+}
+
+void Bank::freeze_account(int account) {
+    sem_wait(&semaphore);
+    if (account < 0 || account >= size) {
+        cout << "Invalid account number" << endl;
+        sem_post(&semaphore);
+        return;
+    }
+    bills[account].frozen = true;
+    cout << "Account " << account << " frozen" << endl;
+    sem_post(&semaphore);
+}
+
+void Bank::unfreeze_account(int account) {
+    sem_wait(&semaphore);
+    if (account < 0 || account >= size) {
+        cout << "Invalid account number" << endl;
+        sem_post(&semaphore);
+        return;
+    }
+    bills[account].frozen = false;
+    cout << "Account " << account << " unfrozen" << endl;
+    sem_post(&semaphore);
+}

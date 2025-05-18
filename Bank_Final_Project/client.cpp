@@ -49,23 +49,61 @@ int main() {
     int command;
     cin >> command;
 
-    while (command){
-        switch (command)
-        {
-        case -1:
-          print_help();
-          break;
-        case 1:
-          int id;
-          cin >> id;
-          bank->show_balance(id);
-          break;
-      default:
-        cout << "Unknown command" << endl;
+    
+while (command) {
+    switch (command) {
+        case 1: { // Show balance
+            int id;
+            cin >> id;
+            bank->show_balance(id);
+            break;
+        }
+        case 2: { // Show min balance
+            int id;
+            cin >> id;
+            bank->show_min_balance(id);
+            break;
+        }
+        case 3: { // Show max balance
+            int id;
+            cin >> id;
+            bank->show_max_balance(id);
+            break;
+        }
+        case 4: { // Freeze account
+            int id;
+            cin >> id;
+            bank->freeze_account(id);
+            break;
+        }
+        case 5: { // Unfreeze account
+            int id;
+            cin >> id;
+            bank->unfreeze_account(id);
+            break;
+        }
+        case 6: { // Transfer
+            int from, to, amount;
+            cin >> from >> to >> amount;
+            try {
+                bank->transfer(from, to, amount);
+            } catch (const exception& e) {
+                cerr << "Error: " << e.what() << endl;
+            }
+            break;
+        }
+        case 11: // Help
+            print_help();
+            break;
+        case 12: // Exit
+            munmap(bank, sb.st_size);
+            close(fd);
+            return 0;
+        default:
+            cout << "Unknown command" << endl;
     }
     cout << "Enter command: ";
     cin >> command;
     }
-        munmap(bank, sb.st_size);
-        close(fd);
-    }
+
+}

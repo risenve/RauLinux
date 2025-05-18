@@ -1,20 +1,16 @@
-CC = g++
-CFLAGS = -Wall -Wextra -std=c++11
-LDFLAGS = -lrt -lpthread
-TARGETS = init client destroy
+CXX = g++
+CXXFLAGS = -Wall -Wextra -std=c++11 -lrt -lpthread
 
-all: $(TARGETS)
+all: init client destroy
 
-init: init.cpp
-	$(CC) $(CFLAGS) init.cpp -o init $(LDFLAGS)
+init: init.cpp bank.cpp
+	$(CXX) $(CXXFLAGS) init.cpp bank.cpp -o init
 
-client: client.cpp bank.cpp bank_structures.h
-	$(CC) $(CFLAGS) client.cpp bank.cpp -o client $(LDFLAGS)
+client: client.cpp bank.cpp
+	$(CXX) $(CXXFLAGS) client.cpp bank.cpp -o client
 
 destroy: destroy.cpp
-	$(CC) $(CFLAGS) destroy.cpp -o destroy $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) destroy.cpp -o destroy
 
 clean:
-	rm -f $(TARGETS)
-
-.PHONY: all clean
+	rm -f init client destroy
