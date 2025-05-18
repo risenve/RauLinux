@@ -1,19 +1,30 @@
-CXX := g++
-CXXFLAGS := -std=c++11 -Wall -Wextra
-LDFLAGS := -lpthread
+CC = g++
+CFLAGS = -std=c++11 -Wall -Wextra -pthread
+LDFLAGS = -lrt -pthread
 
-all: init client destroy
+TARGETS = init destroy client
+SRC_DIR = .
+OBJ_DIR = obj
 
-init: init.cpp bank_structures.h
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
-
-client: client.cpp bank_structures.h
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
-
-destroy: destroy.cpp bank_structures.h
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
-
-clean:
-	rm -f init client destroy
+SOURCES = init.cpp destroy.cpp client.cpp bank.cpp
+OBJECTS = $(SOURCES:%.cpp=$(OBJ_DIR)/%.o)
 
 .PHONY: all clean
+
+all: $(TARGETS)
+
+init: $(OBJ_DIR)/init.o $(OBJ_DIR)/bank.o
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+
+destroy: $(OBJ_DIR)/destroy.o $(OBJ_DIR)/bank.o
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+
+client: $(OBJ_DIR)/client.o $(OBJ_DIR)/bank.o
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -rf $(OBJ_DIR) $(TARGETS)

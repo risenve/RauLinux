@@ -7,7 +7,7 @@
 #include "bank_structures.h"
 
 int main() {
-    int fd = shm_open(SHM_NAME, O_RDWR, 0666);
+    int fd = shm_open("./bank", O_RDWR, 0666);
     if (fd == -1) {
         perror("shm_open failed (возможно, банк уже удален)");
         return 1;
@@ -33,14 +33,14 @@ int main() {
         perror("sem_close failed");
     }
 
-    if (sem_unlink(SEM_NAME) == -1) {
+    if (sem_unlink("./bank_sem") == -1) {
         perror("sem_unlink failed (возможно, уже удален)");
     }
 
     munmap(bank, sb.st_size);
     close(fd);
 
-    if (shm_unlink(SHM_NAME) == -1) {
+    if (shm_unlink("./bank") == -1) {
         perror("shm_unlink failed");
         return 1;
     }

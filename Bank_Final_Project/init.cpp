@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    int fd = shm_open("/bank", O_CREAT | O_RDWR | O_EXCL | O_TRUNC, 0666);
+    int fd = shm_open("/bank", O_CREAT | O_RDWR | O_EXCL , 0666);
     if (fd == -1) {
         perror("shm_open failed");
         return 1;
@@ -45,24 +45,28 @@ int main(int argc, char* argv[]) {
     close(fd);
 
     Bank* bank = static_cast<Bank*>(ptr);
-    bank->size = n;
     
-    /*
-    pthread_mutexattr_t mutex_attr;
-    pthread_mutexattr_init(&mutex_attr);
-    pthread_mutexattr_setpshared(&mutex_attr, PTHREAD_PROCESS_SHARED);
-    pthread_mutex_init(&bank->mutex, &mutex_attr);
-    pthread_mutexattr_destroy(&mutex_attr);
-    */
+    std::cout<<"before creating semaphore";
+    //bank->semaphore  = sem_open("./bank_sem", O_CREAT | O_EXCL,  0666,1);
+    
+    std::cout<<"sem init";
+    if(sem_init(bank->semaphore, 1, 1)!=-1){
+            perror("sem_init");
+	    munmap(ptr, size);
+            shm_unlink("/bank");
+            return 1;
+    }
 
-    sem_t* sem = sem_open("/bank_sem", O_CREAT | O_EXCL | O_TRUNC, 0666,1);
-    if(sem == SEM_FAILED){
+    std::cout << "Bank initialized with " << n << " accounts." << std::endl;
+  /*
+    if(bank->semaphore == SEM_FAILED){
     	perror("sem_open failed");
 	munmap(ptr, size);
 	shm_unlink("/bank");
         return 1;
     }
-	
+  */	
+    bank->size = n;
     // создаю счета
     for (int i = 0; i < n; ++i) {
         Bill& bill = bank->bills[i];
@@ -72,7 +76,16 @@ int main(int argc, char* argv[]) {
         bill.frozen = false;
     }
 
-    std::cout << "Bank initialized with " << n << " accounts." << std::endl;
+    //sem_init 
+    //return sem_t or get in arg
+    //
+    //std::cout<<"sem init";
+    //if(sem_init(bank->semaphore, 1, 1)!=-1){
+    //	    perror("sem_init");
+    //	    return 1;
+    //}
+
+    //std::cout << "Bank initialized with " << n << " accounts." << std::endl;
     munmap(ptr, size);
     return 0;
 }
