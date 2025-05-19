@@ -19,7 +19,7 @@ class Bank {
 private:
     sem_t semaphore;
     int size;
-    Bill* bills;
+    Bill bills[];
     
 public:
     Bank(int n);

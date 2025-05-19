@@ -7,7 +7,6 @@
 using namespace std;
 
 Bank::Bank(int n) : size(n) {
-    bills = new Bill[n];
     sem_init(&semaphore, 1, 1);
     sem_wait(&semaphore);
     for (int i = 0; i < size; i++) {
@@ -22,7 +21,6 @@ Bank::Bank(int n) : size(n) {
 
 Bank::~Bank() {
     sem_destroy(&semaphore);
-    delete[] bills;
 }
 
 void Bank::print_info() {
