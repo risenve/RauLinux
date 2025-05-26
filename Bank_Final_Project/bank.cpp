@@ -127,3 +127,84 @@ void Bank::unfreeze_account(int account) {
     cout << "Account " << account << " unfrozen" << endl;
     sem_post(&semaphore);
 }
+void Bank::credit_all(int amount) {
+    if (amount <= 0) {
+        cout << "Amount must be positive" << endl;
+        return;
+    }
+
+    sem_wait(&semaphore);
+    for (int i = 0; i < size; ++i) {
+        Bill& acc = bills[i];
+        if (!acc.frozen) {
+            if (acc.balance + amount > acc.max_balance) {
+                cout << "Warning: Account " << i << " would exceed max balance. Skipping." << endl;
+                continue;
+            }
+            acc.balance += amount;
+        }
+    }
+    sem_post(&semaphore);
+    cout << "Credited all accounts by " << amount << endl;
+}
+
+void Bank::debit_all(int amount) {
+    if (amount <= 0) {
+        cout << "Amount must be positive" << endl;
+        return;
+    }
+
+    sem_wait(&semaphore);
+    for (int i = 0; i < size; ++i) {
+        Bill& acc = bills[i];
+        if (!acc.frozen) {
+            if (acc.balance - amount < acc.min_balance) {
+                cout << "Warning: Account " << i << " would go below min balance. Skipping." << endl;
+                continue;
+            }
+            acc.balance -= amount;
+        }
+    }
+    sem_post(&semaphore);
+    cout << "Debited all accounts by " << amount << endl;
+}
+
+void Bank::set_min_balance(int account, int new_min) {
+    sem_wait(&semaphore);
+    if (account < 0 || account >= size) {
+        cout << "Invalid account number" << endl;
+        sem_post(&semaphore);
+        return;
+    }
+
+    Bill& acc = bills[account];
+    if (new_min > acc.max_balance) {
+        cout << "Error: Min balance cannot be greater than max balance" << endl;
+    } else if (acc.balance < new_min) {
+        cout << "Error: Current balance is below new min balance" << endl;
+    } else {
+        acc.min_balance = new_min;
+        cout << "Account " << account << " min balance set to " << new_min << endl;
+    }
+    sem_post(&semaphore);
+}
+
+void Bank::set_max_balance(int account, int new_max) {
+    sem_wait(&semaphore);
+    if (account < 0 || account >= size) {
+        cout << "Invalid account number" << endl;
+        sem_post(&semaphore);
+        return;
+    }
+
+    Bill& acc = bills[account];
+    if (new_max < acc.min_balance) {
+        cout << "Error: Max balance cannot be less than min balance" << endl;
+    } else if (acc.balance > new_max) {
+        cout << "Error: Current balance is above new max balance" << endl;
+    } else {
+        acc.max_balance = new_max;
+        cout << "Account " << account << " max balance set to " << new_max << endl;
+    }
+    sem_post(&semaphore);
+}

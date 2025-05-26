@@ -92,6 +92,30 @@ while (command) {
             }
             break;
         }
+	case 7: { // Credit all accounts
+            int amount;
+            cin >> amount;
+            bank->credit_all(amount);
+    	    break;
+	}
+	case 8: { // Debit all accounts
+    	    int amount;
+    	    cin >> amount;
+    	    bank->debit_all(amount);
+    	    break;
+	}
+	case 9: { // Set min balance
+            int id, new_min;
+            cin >> id >> new_min;
+            bank->set_min_balance(id, new_min);
+            break;
+	}
+	case 10: { // Set max balance
+            int id, new_max;
+   	    cin >> id >> new_max;
+    	    bank->set_max_balance(id, new_max);
+    	    break;
+	    } 
         case 11: // Help
             print_help();
             break;
